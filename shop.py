@@ -1,7 +1,7 @@
 from collections import namedtuple
 Customer = namedtuple('Customer','name loyality')
 goods = {
-    'cabbage': 10, 'carrot': 15, 'tea': 40
+    'cabbage': 10, 'carrot': 15, 'tea': 40, 'nutella': 200
          }
 class LineItem:
     def __init__(self,product,quantity,price):
@@ -9,7 +9,7 @@ class LineItem:
         self.quantity = quantity
         self.price = price
     def cost(self):
-        return self.quantity * self.price
+        return int(self.quantity * self.price)
 class Order:
     def __init__(self,customer,foodcart,promotion = None):
         self.customer = customer
@@ -40,10 +40,10 @@ def shop_products() -> None:
         print('| {:^10} | {:^8} |'.format(product, goods[product]))
     return None
 def idintifity() -> Customer:
-  name = input('enter your name:')
-  loyality = input('enter your loyality:')
+  name = input('enter your name:').strip()
+  loyality = input('enter your loyality:').strip()
   try:
-      loyal = float(loyality)
+      loyal = int(loyality)
       customer = Customer(name, loyal)
   except:
       customer = Customer('default_customer', 0)
@@ -53,26 +53,39 @@ def creating_cart() -> Order:
     print('please, choose products, print "stop" to stop:')
     while True:
 
-        inp1 = input()
+        inp1 = input().strip().lower()
         if inp1 != 'stop':
             try:
                 inp2 = inp1.split()
-                if len(inp2) != 2:
-                    inp2 = ['error_product', 0]
-                order.foodcart.append(LineItem(inp2[0],int(inp2[1]), goods[inp2[0]]))
+                try:
+                  q = int(inp2[1])
+                except:
+                    continue
+                if inp2[0] in goods and len(inp2) == 2:
+                    order.foodcart.append(LineItem(inp2[0], q, goods[inp2[0]]))
             except IndexError:
                 LookupError('please,enter product quantity')
         else:
             break
     return order
+def same_things(order:Order) -> Order:
+    d = dict()
+    for product in order.foodcart:
+        if product.product not in d:
+            d[product.product] = product.quantity
+        else:
+            d[product.product] += product.quantity
+    order.foodcart = [LineItem(product, d[product], goods[product]) for product in d]
+    return order
+
 def print_check() -> None:
-    order = creating_cart()
+    order = same_things(creating_cart())
     print('| {:^10} | {:^10} | {:^10} | {:^10} |'.format('product','quantity','price','cost'))
     for product in order.foodcart:
         print('| {:^10} | {:^10} | {:^10} | {:^10} |'.format(
             product.product,product.quantity,product.price,product.cost()
         ))
-    order.promotion = max(different_discount(order), large_discount(order), loyality_discount(order))
+    order.promotion = int(max(different_discount(order), large_discount(order), loyality_discount(order)))
     print(f'{order.total()} - {order.promotion} = {order.due()}')
     return None
 shop_products()
